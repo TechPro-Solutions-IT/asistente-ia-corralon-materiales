@@ -9,108 +9,115 @@
         body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-color: #f4f4f9; margin: 0; padding: 0; }
         
         /* Botón Flotante para abrir el Chat */
-        #chat-circle { position: fixed; bottom: 20px; right: 20px; background: #004a99; /* Azul Rosso */ width: 60px; height: 60px; border-radius: 50%; color: white; text-align: center; line-height: 60px; font-size: 24px; cursor: pointer; box-shadow: 0px 3px 15px rgba(0,0,0,0.2); z-index: 1000; transition: transform 0.3s; }
+        #chat-circle { position: fixed; bottom: 20px; right: 20px; background: #004a99; width: 60px; height: 60px; border-radius: 50%; color: white; text-align: center; line-height: 60px; font-size: 24px; cursor: pointer; box-shadow: 0px 3px 15px rgba(0,0,0,0.2); z-index: 1000; transition: transform 0.3s; }
         #chat-circle:hover { transform: scale(1.1); }
 
-        /* Contenedor del Chat (Oculto por defecto) */
-        .chat-box { display: none; position: fixed; bottom: 90px; right: 20px; width: 350px; max-width: 85vw; height: 500px; max-height: 70vh; background: white; border-radius: 10px; box-shadow: 0px 5px 30px rgba(0,0,0,0.15); overflow: hidden; z-index: 1000; flex-direction: column; }
+        /* Contenedor del Chat (Ajustado para ser flotante) */
+        .chat-box { 
+            display: none; 
+            position: fixed; 
+            bottom: 90px; 
+            right: 20px; 
+            width: 350px; 
+            max-width: 85vw; 
+            height: 500px; 
+            max-height: 70vh; 
+            background: white; 
+            border-radius: 15px; 
+            box-shadow: 0px 5px 30px rgba(0,0,0,0.15); 
+            overflow: hidden; 
+            z-index: 1000; 
+            flex-direction: column; 
+        }
         
         /* Cabecera del Chat */
         .chat-box-header { background: #004a99; height: 50px; color: white; text-align: center; line-height: 50px; font-weight: bold; position: relative; }
-        .chat-box-toggle { position: absolute; top: 0; right: 10px; cursor: pointer; font-size: 20px; }
+        .chat-box-toggle { position: absolute; top: 0; right: 15px; cursor: pointer; font-size: 24px; }
 
-        /* Cuerpo del Chat (donde aparecen los mensajes) */
-        .chat-box-body { flex: 1; padding: 15px; overflow-y: auto; background: #f9f9f9; display: flex; flex-direction: column; gap: 10px; }
+        /* Cuerpo del Chat */
+        .chat-box-body { flex: 1; padding: 15px; overflow-y: auto; background: #f9f9f9; display: flex; flex-direction: column; gap: 10px; scroll-behavior: smooth; }
         
-        /* Estilos de Burbujas de Mensajes */
-        .chat-msg { max-width: 80%; padding: 10px; border-radius: 10px; font-size: 14px; line-height: 1.4; position: relative; }
+        /* Burbujas de Mensajes */
+        .chat-msg { max-width: 85%; padding: 10px 14px; border-radius: 15px; font-size: 14px; line-height: 1.4; position: relative; word-wrap: break-word; white-space: pre-wrap; }
         .chat-msg.user { background: #007bff; color: white; align-self: flex-end; border-bottom-right-radius: 2px; }
-        .chat-msg.bot { background: #e1e1e1; color: #333; align-self: flex-start; border-bottom-left-radius: 2px; }
-        .chat-msg-time { font-size: 10px; color: rgba(0,0,0,0.5); margin-top: 5px; display: block; }
+        .chat-msg.bot { background: #e9ecef; color: #333; align-self: flex-start; border-bottom-left-radius: 2px; border: 1px solid #dee2e6; }
+        .chat-msg-time { font-size: 10px; color: rgba(0,0,0,0.4); margin-top: 5px; display: block; }
         .chat-msg.user .chat-msg-time { color: rgba(255,255,255,0.7); text-align: right; }
 
-        /* Campo de Entrada de Texto */
-        .chat-input-area { height: 50px; border-top: 1px solid #eee; display: flex; align-items: center; padding: 0 10px; background: white; }
-        .chat-input-area input { flex: 1; border: none; outline: none; height: 35px; font-size: 14px; }
+        /* Campo de Entrada */
+        .chat-input-area { height: 60px; border-top: 1px solid #eee; display: flex; align-items: center; padding: 0 15px; background: white; }
+        .chat-input-area input { flex: 1; border: none; outline: none; height: 40px; font-size: 14px; }
         .chat-submit { background: none; border: none; color: #004a99; cursor: pointer; font-weight: bold; font-size: 16px; margin-left: 10px; }
         
-        /* Indicador de "Escribiendo..." */
-        .typing-indicator { font-style: italic; color: #888; font-size: 12px; margin-left: 15px; display: none; }
+        /* Indicador de "Escribiendo" */
+        #typing-indicator { padding: 5px 15px; font-style: italic; color: #888; font-size: 12px; display: none; background: #f9f9f9; }
     </style>
 </head>
 <body>
 
     <div id="chat-circle"> 💬 </div>
 
-    <div class="chat-box">
+    <div class="chat-box" id="chat-box-container">
         <div class="chat-box-header">
-            Empresa de Materiales Asistente IA
-            <span class="chat-box-toggle">&times;</span>
+            Asistente IA Materiales
+            <span class="chat-box-toggle" id="chat-close">&times;</span>
         </div>
         
         <div class="chat-box-body" id="chat-box-body"></div>
-            </div>
         
-        <div class="typing-indicator" id="typing-indicator">Materiales IA está escribiendo...</div>
+        <div id="typing-indicator">Materiales IA está escribiendo...</div>
         
         <div class="chat-input-area">
-            <input type="text" id="chat-input" placeholder="Ej: Necesito 20 PGC 100...">
+            <input type="text" id="chat-input" placeholder="Escribe tu mensaje aquí..." autocomplete="off">
             <button type="submit" class="chat-submit" id="chat-submit">Enviar</button>
         </div>
     </div>
 
     <script>
-    // --- CONFIGURACIÓN VITAL ---
-    // REEMPLAZÁ esta URL por tu dirección de ngrok cuando lo actives
+    // --- CONFIGURACIÓN ---
     const N8N_WEBHOOK_URL = "https://unnuzzled-kristy-peaceably.ngrok-free.dev/webhook-test/asistente-materiales-v1"; 
-    // ---------------------------
+    let chatIniciado = false;
 
     document.addEventListener('DOMContentLoaded', () => {
         const chatCircle = document.getElementById('chat-circle');
-        const chatBox = document.querySelector('.chat-box');
-        const chatBoxToggle = document.querySelector('.chat-box-toggle');
+        const chatBox = document.getElementById('chat-box-container');
+        const chatClose = document.getElementById('chat-close');
         const chatInput = document.getElementById('chat-input');
         const chatSubmit = document.getElementById('chat-submit');
         const chatBody = document.getElementById('chat-box-body');
         const typingIndicator = document.getElementById('typing-indicator');
 
-        document.getElementById('welcome-time').innerText = new Date().toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
-
-        chatCircle.addEventListener('click', () => {
-            chatBox.style.display = 'flex';
-            chatCircle.style.display = 'none';
-        });
-
-        chatBoxToggle.addEventListener('click', () => {
-            chatBox.style.display = 'none';
-            chatCircle.style.display = 'block';
-        });
-
+        // Función para renderizar mensajes en pantalla
         function renderMessage(text, sender) {
             const time = new Date().toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
             const msgDiv = document.createElement('div');
             msgDiv.classList.add('chat-msg', sender);
-            msgDiv.innerHTML = `${text}<span class="chat-msg-time">${time}</span>`;
+            
+            // Reemplaza saltos de línea por <br> para que el menú se vea bien
+            const formattedText = text.replace(/\n/g, '<br>');
+            msgDiv.innerHTML = `${formattedText}<span class="chat-msg-time">${time}</span>`;
+            
             chatBody.appendChild(msgDiv);
             chatBody.scrollTop = chatBody.scrollHeight;
         }
 
-        async function sendMessage() {
-            const message = chatInput.value.trim();
-            if (message === "") return;
-
-            // 1. Limpieza y Bloqueo de Input (El "Loop" de UX)
-            renderMessage(message, 'user');
-            chatInput.value = ''; // Limpiamos el campo inmediatamente
-            chatInput.disabled = true; // Bloqueamos para evitar spam
-            chatSubmit.disabled = true;
+        // Función principal de envío a n8n
+        async function sendMessage(textoManual = null) {
+            const message = textoManual !== null ? textoManual : chatInput.value.trim();
             
+            // Si es manual (saludo inicial) no renderizamos el mensaje del usuario
+            if (textoManual === null) {
+                if (message === "") return;
+                renderMessage(message, 'user');
+                chatInput.value = '';
+            }
+
+            chatInput.disabled = true;
+            chatSubmit.disabled = true;
             typingIndicator.style.display = 'block';
-            chatBody.scrollTop = chatBody.scrollHeight;
 
             const payload = {
-                nombre: "Fernando", // Podés dejarlo genérico o usar tu nombre
-                mensaje_cliente: message,
+                mensaje_cliente: message || "hola", // Si está vacío, mandamos "hola" para el saludo
                 timestamp: new Date().toISOString(),
                 origen: "github_pages"
             };
@@ -122,30 +129,42 @@
                     body: JSON.stringify(payload)
                 });
 
-                typingIndicator.style.display = 'none';
-
                 if (response.ok) {
                     const data = await response.json();
-                    if (data && data.respuesta) {
-                        renderMessage(data.respuesta, 'bot');
-                    } else {
-                        renderMessage("Recibí tu mensaje, pero n8n no devolvió una 'respuesta' válida.", 'bot');
-                    }
+                    // IMPORTANTE: n8n debe devolver un JSON que tenga el campo "respuesta"
+                    const botReply = data.respuesta || data[0]?.respuesta || "Lo siento, no pude procesar la respuesta.";
+                    renderMessage(botReply, 'bot');
                 } else {
-                    renderMessage("Error de conexión con el bot. ¿Está prendido n8n?", 'bot');
+                    renderMessage("Error de conexión. ¿Está n8n activo?", 'bot');
                 }
             } catch (error) {
-                typingIndicator.style.display = 'none';
                 renderMessage("Error crítico: " + error.message, 'bot');
             } finally {
-                // 2. Desbloqueo: El bot queda listo para la siguiente pregunta
+                typingIndicator.style.display = 'none';
                 chatInput.disabled = false;
                 chatSubmit.disabled = false;
-                chatInput.focus(); // Ponemos el cursor listo para escribir de nuevo
+                chatInput.focus();
             }
         }
 
-        chatSubmit.addEventListener('click', sendMessage);
+        // Abrir Chat y disparar saludo inicial
+        chatCircle.addEventListener('click', () => {
+            chatBox.style.display = 'flex';
+            chatCircle.style.display = 'none';
+            
+            if (!chatIniciado) {
+                sendMessage(""); // Disparamos el primer saludo automático
+                chatIniciado = true;
+            }
+        });
+
+        // Cerrar Chat
+        chatClose.addEventListener('click', () => {
+            chatBox.style.display = 'none';
+            chatCircle.style.display = 'block';
+        });
+
+        chatSubmit.addEventListener('click', () => sendMessage());
         chatInput.addEventListener('keypress', (e) => {
             if (e.key === 'Enter') sendMessage();
         });
