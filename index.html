@@ -149,14 +149,25 @@
 
         // Abrir Chat y disparar saludo inicial
         chatCircle.addEventListener('click', () => {
-            chatBox.style.display = 'flex';
-            chatCircle.style.display = 'none';
-            
-            if (!chatIniciado) {
-                sendMessage(""); // Disparamos el primer saludo automático
-                chatIniciado = true;
-            }
-        });
+    chatBox.style.display = 'flex';
+    chatCircle.style.display = 'none';
+    
+    if (!chatIniciado) {
+        // En lugar de enviar mensaje a n8n, lo escribimos nosotros
+        const saludoInicial = `Hola 👋 soy el asistente de ventas de Empresa de materiales.
+        
+        ¿En qué puedo ayudarte hoy? Por favor, escribe el número de la opción que desees:
+
+        1. Solicitar Presupuesto
+        2. Confirmar Presupuesto
+        3. Calcular Materiales
+        4. Asesoramiento / Consulta
+        5. Estado de Pedido`;
+        
+        renderMessage(saludoInicial, 'bot');
+        chatIniciado = true;
+    }
+});
 
         // Cerrar Chat
         chatClose.addEventListener('click', () => {
