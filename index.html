@@ -12,7 +12,7 @@
         #chat-circle { position: fixed; bottom: 20px; right: 20px; background: #004a99; width: 60px; height: 60px; border-radius: 50%; color: white; text-align: center; line-height: 60px; font-size: 24px; cursor: pointer; box-shadow: 0px 3px 15px rgba(0,0,0,0.2); z-index: 1000; transition: transform 0.3s; }
         #chat-circle:hover { transform: scale(1.1); }
 
-        /* Contenedor del Chat (Ajustado para ser flotante) */
+        /* Contenedor del Chat */
         .chat-box { 
             display: none; 
             position: fixed; 
@@ -30,26 +30,21 @@
             flex-direction: column; 
         }
         
-        /* Cabecera del Chat */
         .chat-box-header { background: #004a99; height: 50px; color: white; text-align: center; line-height: 50px; font-weight: bold; position: relative; }
         .chat-box-toggle { position: absolute; top: 0; right: 15px; cursor: pointer; font-size: 24px; }
 
-        /* Cuerpo del Chat */
         .chat-box-body { flex: 1; padding: 15px; overflow-y: auto; background: #f9f9f9; display: flex; flex-direction: column; gap: 10px; scroll-behavior: smooth; }
         
-        /* Burbujas de Mensajes */
         .chat-msg { max-width: 85%; padding: 10px 14px; border-radius: 15px; font-size: 14px; line-height: 1.4; position: relative; word-wrap: break-word; white-space: pre-wrap; }
         .chat-msg.user { background: #007bff; color: white; align-self: flex-end; border-bottom-right-radius: 2px; }
         .chat-msg.bot { background: #e9ecef; color: #333; align-self: flex-start; border-bottom-left-radius: 2px; border: 1px solid #dee2e6; }
         .chat-msg-time { font-size: 10px; color: rgba(0,0,0,0.4); margin-top: 5px; display: block; }
         .chat-msg.user .chat-msg-time { color: rgba(255,255,255,0.7); text-align: right; }
 
-        /* Campo de Entrada */
         .chat-input-area { height: 60px; border-top: 1px solid #eee; display: flex; align-items: center; padding: 0 15px; background: white; }
         .chat-input-area input { flex: 1; border: none; outline: none; height: 40px; font-size: 14px; }
         .chat-submit { background: none; border: none; color: #004a99; cursor: pointer; font-weight: bold; font-size: 16px; margin-left: 10px; }
         
-        /* Indicador de "Escribiendo" */
         #typing-indicator { padding: 5px 15px; font-style: italic; color: #888; font-size: 12px; display: none; background: #f9f9f9; }
     </style>
 </head>
@@ -74,8 +69,16 @@
     </div>
 
     <script>
-    // --- CONFIGURACIÓN ---
+    // --- CONFIGURACIÓN Y PERSISTENCIA DE SESIÓN ---
     const N8N_WEBHOOK_URL = "https://unnuzzled-kristy-peaceably.ngrok-free.dev/webhook-test/asistente-materiales-v1"; 
+    
+    // Generar o recuperar un ID de sesión único para n8n Memory
+    if (!localStorage.getItem('chat_session_id')) {
+        const uniqueId = 'sess-' + Math.random().toString(36).substr(2, 9) + '-' + Date.now();
+        localStorage.setItem('chat_session_id', uniqueId);
+    }
+    const SESSION_ID = localStorage.getItem('chat_session_id');
+
     let chatIniciado = false;
 
     document.addEventListener('DOMContentLoaded', () => {
@@ -87,13 +90,11 @@
         const chatBody = document.getElementById('chat-box-body');
         const typingIndicator = document.getElementById('typing-indicator');
 
-        // Función para renderizar mensajes en pantalla
         function renderMessage(text, sender) {
             const time = new Date().toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
             const msgDiv = document.createElement('div');
             msgDiv.classList.add('chat-msg', sender);
             
-            // Reemplaza saltos de línea por <br> para que el menú se vea bien
             const formattedText = text.replace(/\n/g, '<br>');
             msgDiv.innerHTML = `${formattedText}<span class="chat-msg-time">${time}</span>`;
             
@@ -101,11 +102,9 @@
             chatBody.scrollTop = chatBody.scrollHeight;
         }
 
-        // Función principal de envío a n8n
         async function sendMessage(textoManual = null) {
             const message = textoManual !== null ? textoManual : chatInput.value.trim();
             
-            // Si es manual (saludo inicial) no renderizamos el mensaje del usuario
             if (textoManual === null) {
                 if (message === "") return;
                 renderMessage(message, 'user');
@@ -116,8 +115,10 @@
             chatSubmit.disabled = true;
             typingIndicator.style.display = 'block';
 
+            // Payload corregido con sessionId para el nodo Memory de n8n
             const payload = {
-                mensaje_cliente: message || "hola", // Si está vacío, mandamos "hola" para el saludo
+                mensaje_cliente: message,
+                sessionId: SESSION_ID, 
                 timestamp: new Date().toISOString(),
                 origen: "github_pages"
             };
@@ -131,8 +132,8 @@
 
                 if (response.ok) {
                     const data = await response.json();
-                    // IMPORTANTE: n8n debe devolver un JSON que tenga el campo "respuesta"
-                    const botReply = data.respuesta || data[0]?.respuesta || "Lo siento, no pude procesar la respuesta.";
+                    // Sincronizado con n8n: Busca "respuesta" primero
+                    const botReply = data.respuesta || data.text || data[0]?.respuesta || "Lo siento, no pude procesar la respuesta.";
                     renderMessage(botReply, 'bot');
                 } else {
                     renderMessage("Error de conexión. ¿Está n8n activo?", 'bot');
@@ -147,26 +148,18 @@
             }
         }
 
-        // Abrir Chat y disparar saludo inicial
         chatCircle.addEventListener('click', () => {
-    chatBox.style.display = 'flex';
-    chatCircle.style.display = 'none';
-    
-    if (!chatIniciado) {
-        // En lugar de enviar mensaje a n8n, lo escribimos nosotros
-        const saludoInicial = `Hola 👋 soy el asistente de ventas de Empresa de Materiales. Para poder ayudarte, por favor, escribí el número de la opción que desees:
-        1. Solicitar Presupuesto
-        2. Confirmar Presupuesto
-        3. Calcular Materiales
-        4. Asesoramiento / Consulta
-        5. Estado de Pedido`;
-        
-        renderMessage(saludoInicial, 'bot');
-        chatIniciado = true;
-    }
-});
+            chatBox.style.display = 'flex';
+            chatCircle.style.display = 'none';
+            
+            if (!chatIniciado) {
+                const saludoInicial = `Hola 👋 soy el asistente de ventas de Empresa de Materiales. Para poder ayudarte, por favor, escribí el número de la opción que desees:\n\n1. Solicitar Presupuesto\n2. Confirmar Presupuesto\n3. Calcular Materiales\n4. Asesoramiento / Consulta\n5. Estado de Pedido`;
+                
+                renderMessage(saludoInicial, 'bot');
+                chatIniciado = true;
+            }
+        });
 
-        // Cerrar Chat
         chatClose.addEventListener('click', () => {
             chatBox.style.display = 'none';
             chatCircle.style.display = 'block';
